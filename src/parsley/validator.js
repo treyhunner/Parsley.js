@@ -56,22 +56,14 @@ define('parsley/validator', [
   }
 
 
-  // A Validator needs to implement two methods:
-  // `validate(value, requirements...)`, returning `true`, `false`
-  // `parseRequirements(requirementString), returning an array of values
+  // A Validator needs to implement the methods `validate` and `parseRequirements`
 
   var ParsleyValidator = function(spec) {
     $.extend(this, spec);
-    if (spec.parametersTransformer) {
-      ParsleyUtils.warnOnce('parametersTransformer is deprecated. Use requirementType or define parseRequirements instead');
-      this.parseRequirements = function(requirementString) {
-        var result = spec.parametersTransformer(requirementString)
-        return $.isArray(result) ? result : [result];
-      };
-    }
   };
 
   ParsleyValidator.prototype = {
+    // A utility function to call parseRequirements and validate at once
     parseAndValidate: function(value, requirements) {
       var args = this.parseRequirements(requirements);
       args.unshift(value);
@@ -80,9 +72,7 @@ define('parsley/validator', [
 
     // Returns `true` iff the given `value` is valid according the given requirements.
     validate: function(value, requirementArg1, requirementArg2) {
-      if(this.fn) {
-        // TODO: Guess if array
-        // Legacy style validator:
+      if(this.fn) { // Legacy style validator
         if(arguments.length > 2)
           requirementArg1 = [].slice.call(arguments, 1);
         return this.fn.call(this, value, requirementArg1);
@@ -106,8 +96,6 @@ define('parsley/validator', [
       }
     },
 
-    requirementType: 'string',
-
     // Parses `requirements` into an array of arguments,
     // according to `this.requirementType`
     parseRequirements: function(requirements) {
@@ -125,7 +113,12 @@ define('parsley/validator', [
       } else {
         return [convertRequirement(type, requirements)];
       }
-    }
+    },
+
+    // Defaults:
+    requirementType: 'string',
+
+    priority: 2
   };
 
   return ParsleyValidator;
