@@ -114,7 +114,7 @@ define('parsley/field', [
 
       // Use `data-parsley-trim-value="true"` to auto trim inputs entry
       if (true === this.options.trimValue)
-        return value.replace(/^\s+|\s+$/g, '');
+        return ParsleyUtils.trimString(value);
 
       return value;
     },
