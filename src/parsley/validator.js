@@ -59,7 +59,7 @@ define('parsley/validator', [
   // A Validator needs to implement the methods `validate` and `parseRequirements`
 
   var ParsleyValidator = function(spec) {
-    $.extend(this, spec);
+    $.extend(true, this, spec);
   };
 
   ParsleyValidator.prototype = {
