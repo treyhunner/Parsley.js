@@ -12,6 +12,7 @@ define(function () {
       testParsing('number', '4.2', [4.2]);
       testParsing('string', '42', ['42']);
       testParsing(['number', 'string'], '[4.2, 4.2]', [4.2, '4.2']);
+      testParsing({'': 'number', 'string'], '[4.2, 4.2]', [4.2, '4.2']);
     });
   };
 });

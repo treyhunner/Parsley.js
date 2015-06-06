@@ -53,8 +53,22 @@ define('parsley/validator', [
     if (!converter)
       throw 'Unknown requirement specification: "' + requirementType + '"';
     return converter(string);
-  }
+  };
 
+  var convertExtraOptionRequirement = function(requirementSpec, string, extraOptionReader) {
+    var main = null, extra = {};
+    for(var key in requirementSpec) {
+      if (key) {
+        var value = extraOptionReader(key);
+        if('string' === typeof value)
+          value = convertRequirement(requirementSpec[key], value);
+        extra[key] = value;
+      } else {
+        main = convertRequirement(requirementSpec[key], string)
+      }
+    }
+    return [main, extra];
+  };
 
   // A Validator needs to implement the methods `validate` and `parseRequirements`
 
@@ -64,8 +78,8 @@ define('parsley/validator', [
 
   ParsleyValidator.prototype = {
     // A utility function to call parseRequirements and validate at once
-    parseAndValidate: function(value, requirements) {
-      var args = this.parseRequirements(requirements);
+    parseAndValidate: function(value, requirements, extraOptionReader) {
+      var args = this.parseRequirements(requirements, extraOptionReader);
       args.unshift(value);
       return this.validate.apply(this, args);
     },
@@ -98,7 +112,7 @@ define('parsley/validator', [
 
     // Parses `requirements` into an array of arguments,
     // according to `this.requirementType`
-    parseRequirements: function(requirements) {
+    parseRequirements: function(requirements, extraOptionReader) {
       if ('string' !== typeof requirements) {
         // Assume requirement already parsed
         // but make sure we return an array
@@ -110,6 +124,8 @@ define('parsley/validator', [
         for (var i = 0; i < values.length; i++)
           values[i] = convertRequirement(type[i], values[i]);
         return values;
+      } else if ($.isPlainObject(type)) {
+        return convertExtraOptionRequirement(type, requirements, extraOptionReader)
       } else {
         return [convertRequirement(type, requirements)];
       }
