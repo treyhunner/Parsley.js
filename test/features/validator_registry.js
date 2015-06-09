@@ -6,7 +6,9 @@ define(function () {
       var expectValidation = function(value, name, requirements) {
         var validatorSpec = validatorRegistry.validators[name];
         var validator = new ParsleyValidator(validatorSpec);
-        return expect(validator.parseAndValidate(value, requirements));
+        var argList = validator.parseRequirements(requirements);
+        argList.unshift(value);
+        return expect(validator.validate.apply(validator, argList));
       };
 
       it('should be a function', function () {
