@@ -22,6 +22,12 @@ define('parsley/validator', [
         throw 'No such reference: "' + string + '"';
       return result;
     },
+    boolean: function(string) {
+      return string !== 'false';
+    },
+    object: function(string) {
+      return ParsleyUtils.deserializeValue(string);
+    },
     regexp: function(regexp) {
       var flags = '';
 
@@ -87,7 +93,7 @@ define('parsley/validator', [
 
       if ($.isArray(value)) {
         if (!this.validateMultiple)
-          throw 'Validator ' + this.name + ' does not handle multiple values';
+          throw 'This validator does not handle multiple values';
         return this.validateMultiple.apply(this, arguments);
       } else {
         if (this.validateNumber) {
@@ -99,7 +105,8 @@ define('parsley/validator', [
         if (this.validateString) {
           return this.validateString.apply(this, arguments);
         }
-        throw 'Validator ' + this.name + ' only handles multiple values';
+        debugger
+        throw 'This validator only handles multiple values';
       }
     },
 

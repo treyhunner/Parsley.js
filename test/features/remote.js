@@ -19,63 +19,12 @@ define('features/remote', [
       it('should have window.ParsleyExtend defined', function () {
         expect(window.ParsleyExtend).not.to.be(undefined);
       });
-      it('should return a promise object when calling asyncIsValid and asyncValidate on a field', function () {
-        $('body').append('<input type="email" id="element" required data-parsley-remote="http://foo.bar" />');
-        var promise = $('#element').psly().asyncIsValid();
-        expect(promise).to.be.an('object');
-        expect(promise).to.have.key('promise');
-        promise = $('#element').psly().asyncValidate();
-        expect(promise).to.be.an('object');
-        expect(promise).to.have.key('promise');
-      });
-      it('should return a promise object when calling asyncIsValid and asyncValidate on a form', function () {
-        $('body').append(
-          '<form id="element" data-parsley-trigger="change">'                 +
-            '<input id="field1" type="text" data-parsley-required="true" />'  +
-            '<div id="field2"></div>'                                         +
-            '<textarea id="field3" data-parsley-notblank="true"></textarea>'  +
-          '</form>');
-        var promise = $('#element').psly().asyncIsValid();
-        expect(promise).to.be.an('object');
-        expect(promise).to.have.key('promise');
-        promise = $('#element').psly().asyncValidate();
-        expect(promise).to.be.an('object');
-        expect(promise).to.have.key('promise');
-      });
-      it('should trigger right events on asyncValidate for form and field', function (done) {
-        $('body').append(
-          '<form id="element" data-parsley-trigger="change">'                 +
-            '<input id="field1" type="text" data-parsley-required="true" />'  +
-            '<div id="field2"></div>'                                         +
-            '<textarea id="field3" data-parsley-notblank="true"></textarea>'  +
-          '</form>');
-        $('#element').parsley()
-        .on('form:validated', function () { done(); })
-        .asyncValidate();
-      });
-      it('should have a force option for asyncValidate and asyncIsValid methods', function (done) {
-        $('body').append('<input type="email" id="element" />');
-        var parsleyInstance = $('#element').parsley();
-        parsleyInstance.asyncIsValid()
-          .done(function () {
-            parsleyInstance.asyncValidate()
-              .done(function () {
-                parsleyInstance.asyncIsValid(true)
-                  .fail(function () {
-                    parsleyInstance.asyncValidate(true)
-                      .fail(function () {
-                        done();
-                      });
-                  });
-              });
-          });
-      });
       it('should handle properly validation with remote validator', function (done) {
         $('body').append('<input type="text" data-parsley-remote="http://foo.bar" id="element" required name="element" value="foo" />');
         var parsleyInstance = $('#element').parsley();
 
         sinon.stub($, 'ajax').returns($.Deferred().reject({ status: 400, state: function () { return 'rejected' } }, 'error', 'error'));
-        parsleyInstance.asyncIsValid()
+        parsleyInstance.whenValid()
           .fail(function () {
             $.ajax.restore();
             sinon.stub($, 'ajax').returns($.Deferred().resolve({}, 'success', { status: 200, state: function () { return 'resolved' } }));

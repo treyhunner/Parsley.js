@@ -36,44 +36,6 @@ window.ParsleyExtend = $.extend(true, window.ParsleyExtend, {
     return this;
   },
 
-  asyncValidate: function () {
-    if ('ParsleyForm' === this.__class__)
-      return this._asyncValidateForm.apply(this, arguments);
-
-    return this._asyncValidateField.apply(this, arguments);
-  },
-
-  asyncIsValid: function () {
-    if ('ParsleyField' === this.__class__)
-      return this._asyncIsValidField.apply(this, arguments);
-
-    return this._asyncIsValidForm.apply(this, arguments);
-  },
-
-  onSubmitValidate: function (event) {
-    var that = this;
-
-    // This is a Parsley generated submit event, do not validate, do not prevent, simply exit and keep normal behavior
-    if (true === event.parsley)
-      return;
-
-    // Clone the event object
-    this.submitEvent = $.extend(true, {}, event);
-
-    // Prevent form submit and immediately stop its event propagation
-    if (event instanceof $.Event) {
-      event.stopImmediatePropagation();
-      event.preventDefault();
-    }
-
-    return this._asyncValidateForm(undefined, event)
-      .done(function () {
-        // If user do not have prevented the event, re-submit form
-        if (that._trigger('submit') && !that.submitEvent.isDefaultPrevented())
-          that.$element.trigger($.extend($.Event('submit'), { parsley: true }));
-      });
-  },
-
   eventValidate: function (event) {
     // For keyup, keypress, keydown.. events that could be a little bit obstrusive
     // do not validate if val length < min threshold on first validation. Once field have been validated once and info
@@ -83,102 +45,16 @@ window.ParsleyExtend = $.extend(true, window.ParsleyExtend, {
         return;
 
     this._ui.validatedOnce = true;
-    this.asyncValidate();
-  },
+    this.whenValidate();
+  }
+});
 
-  // Returns Promise
-  _asyncValidateForm: function (group, event) {
+var remoteValidate = function (value, url, options) {
     var
-      that = this,
-      promises = [];
-
-    this._refreshFields();
-
-    this._trigger('validate');
-
-    for (var i = 0; i < this.fields.length; i++) {
-
-      // do not validate a field if not the same as given validation group
-      if (group && group !== this.fields[i].options.group)
-        continue;
-
-      promises.push(this.fields[i]._asyncValidateField());
-    }
-
-    return $.when.apply($, promises)
-      .done(function () {
-        that._trigger('success');
-      })
-      .fail(function () {
-        that._trigger('error');
-      })
-      .always(function () {
-        that._trigger('validated');
-      });
-  },
-
-  _asyncIsValidForm: function (group, force) {
-    var promises = [];
-    this._refreshFields();
-
-    for (var i = 0; i < this.fields.length; i++) {
-
-      // do not validate a field if not the same as given validation group
-      if (group && group !== this.fields[i].options.group)
-        continue;
-
-      promises.push(this.fields[i]._asyncIsValidField(force));
-    }
-
-    return $.when.apply($, promises);
-  },
-
-  _asyncValidateField: function (force) {
-    var that = this;
-
-    this._trigger('validate');
-
-    return this._asyncIsValidField(force)
-      .done(function () {
-        that._trigger('success');
-      })
-      .fail(function () {
-        that._trigger('error');
-      })
-      .always(function () {
-        that._trigger('validated');
-      });
-  },
-
-  _asyncIsValidField: function (force, value) {
-    var
-      deferred = $.Deferred(),
-      remoteConstraintIndex;
-
-    // If regular isValid (matching regular constraints) returns `false`, no need to go further
-    // Directly reject promise, do not run remote validator and save server load
-    if (false === this.isValid(force, value))
-      deferred.rejectWith(this);
-
-    // If regular constraints are valid, and there is a remote validator registered, run it
-    else if ('undefined' !== typeof this.constraintsByName.remote)
-      this._remote(deferred);
-
-    // Otherwise all is good, resolve promise
-    else
-      deferred.resolveWith(this);
-
-    // Return promise
-    return deferred.promise();
-  },
-
-  _remote: function (deferred) {
-    var
-      that = this,
       data = {},
       ajaxOptions,
       csr,
-      validator = this.options.remoteValidator || (true === this.options.remoteReverse ? 'reverse' : 'default');
+      validator = options.validator || (true === options.reverse ? 'reverse' : 'default');
 
     validator = validator.toLowerCase();
 
@@ -189,64 +65,32 @@ window.ParsleyExtend = $.extend(true, window.ParsleyExtend, {
     data[this.$element.attr('name') || this.$element.attr('id')] = this.getValue();
 
     // Merge options passed in from the function with the ones in the attribute
-    this.options.remoteOptions = $.extend(true, this.options.remoteOptions || {} , this.asyncValidators[validator].options);
+    var remoteOptions = $.extend(true, options.options || {} , window.Parsley.asyncValidators[validator].options);
 
     // All `$.ajax(options)` could be overridden or extended directly from DOM in `data-parsley-remote-options`
     ajaxOptions = $.extend(true, {}, {
-      url: this.asyncValidators[validator].url || this.options.remote,
+      url: this.asyncValidators[validator].url || url,
       data: data,
       type: 'GET'
-    }, this.options.remoteOptions || {});
+    }, remoteOptions);
 
     // Generate store key based on ajax options
     csr = $.param(ajaxOptions);
 
     // Initialise querry cache
-    if ('undefined' === typeof this._remoteCache)
-      this._remoteCache = {};
+    if ('undefined' === typeof window.Parsley._remoteCache)
+      window.Parsley._remoteCache = {};
 
     // Try to retrieve stored xhr
-    if (!this._remoteCache[csr]) {
-      // Prevent multi burst xhr queries
-      if (this._xhr && 'pending' === this._xhr.state())
-        this._xhr.abort();
+    var xhr = window.Parsley._remoteCache[csr] = window.Parsley._remoteCache[csr] || $.ajax(ajaxOptions);
 
-      // Make ajax call
-      this._xhr = $.ajax(ajaxOptions);
+    var handleXhr = function() {
+      return window.Parsley.asyncValidators[validator](xhr, url, options) ||
+        $.Deferred().reject().promise(); // Map false to rejected promise
+    };
 
-      // Store remote call result to avoid next calls with exact same parameters
-      this._remoteCache[csr] = this._xhr;
-    }
-
-    this._remoteCache[csr]
-      .done(function (data, textStatus, xhr) {
-        that._handleRemoteResult(validator, xhr, deferred);
-      })
-      .fail(function (xhr, status, message) {
-        // If we aborted the query, do not handle nothing for this value
-        if ('abort' === status)
-          return;
-
-        that._handleRemoteResult(validator, xhr, deferred);
-      });
-  },
-
-  _handleRemoteResult: function (validator, xhr, deferred) {
-    // If true, simply resolve and exit
-    if ('function' === typeof this.asyncValidators[validator].fn && this.asyncValidators[validator].fn.call(this, xhr)) {
-      deferred.resolveWith(this);
-
-      return;
-    }
-
-    // Else, create a proper remote validation Violation to trigger right UI
-    this.validationResult = [
-      {assert: this.constraintsByName.remote}
-    ];
-
-    deferred.rejectWith(this);
-  }
-});
+    xhr.then(handleXhr, handleXhr);
+  };
 
 // Remote validator is just an always true sync validator with lowest (-1) priority possible
 // It will be overloaded in `validateThroughValidator()` that will do the heavy async work
@@ -254,14 +98,21 @@ window.ParsleyExtend = $.extend(true, window.ParsleyExtend, {
 window.ParsleyConfig = window.ParsleyConfig || {};
 window.ParsleyConfig.validators = window.ParsleyConfig.validators || {};
 window.ParsleyConfig.validators.remote = {
-  fn: function () {
+  requirementType: {
+    '': 'string',
+    'validator': 'string',
+    'reverse': 'boolean',
+    'options': 'object'
+  },
+
+  validateString: function () {
     return true;
   },
   priority: -1
 };
-
+debugger
 window.Parsley.on('form:submit', function () {
-  this._remoteCache = {};
+  window.Parsley._remoteCache = {};
 });
 
 })(jQuery);
