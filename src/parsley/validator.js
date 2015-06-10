@@ -93,7 +93,7 @@ define('parsley/validator', [
 
       if ($.isArray(value)) {
         if (!this.validateMultiple)
-          throw 'This validator does not handle multiple values';
+          throw 'Validator `' + this.name + '` does not handle multiple values';
         return this.validateMultiple.apply(this, arguments);
       } else {
         if (this.validateNumber) {
@@ -105,8 +105,7 @@ define('parsley/validator', [
         if (this.validateString) {
           return this.validateString.apply(this, arguments);
         }
-        debugger
-        throw 'This validator only handles multiple values';
+        throw 'Validator `' + this.name + '` only handles multiple values';
       }
     },
 

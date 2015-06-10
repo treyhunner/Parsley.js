@@ -103,7 +103,7 @@ define('parsley/validator_registry', [
     },
 
     // Add a new validator
-    addValidator: function (name, fn, priority) {
+    addValidator: function (name, validatorfn, priority) {
       if (this.validators[name])
         ParsleyUtils.warn('Validator "' + name + '" is already defined.');
       else if (ParsleyDefaults.hasOwnProperty(name)) {

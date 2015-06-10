@@ -92,12 +92,7 @@ var remoteValidate = function (value, url, options) {
     xhr.then(handleXhr, handleXhr);
   };
 
-// Remote validator is just an always true sync validator with lowest (-1) priority possible
-// It will be overloaded in `validateThroughValidator()` that will do the heavy async work
-// This 'hack' is needed not to mess up too much with error messages and stuff in `ParsleyUI`
-window.ParsleyConfig = window.ParsleyConfig || {};
-window.ParsleyConfig.validators = window.ParsleyConfig.validators || {};
-window.ParsleyConfig.validators.remote = {
+window.Parsley.addValidator('remote', {
   requirementType: {
     '': 'string',
     'validator': 'string',
@@ -109,8 +104,8 @@ window.ParsleyConfig.validators.remote = {
     return true;
   },
   priority: -1
-};
-debugger
+});
+
 window.Parsley.on('form:submit', function () {
   window.Parsley._remoteCache = {};
 });
