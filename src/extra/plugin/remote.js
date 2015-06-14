@@ -92,7 +92,7 @@ var remoteValidate = function (value, url, options) {
     xhr.then(handleXhr, handleXhr);
   };
 
-window.Parsley.addValidator('remote', {
+window.ParsleyValidator.addValidator('remote', {
   requirementType: {
     '': 'string',
     'validator': 'string',
@@ -103,6 +103,7 @@ window.Parsley.addValidator('remote', {
   validateString: function () {
     return true;
   },
+
   priority: -1
 });
 
