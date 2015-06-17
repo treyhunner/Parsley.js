@@ -768,51 +768,30 @@ if (false === instance.options.priorityEnabled)
             These validators are shipped in <code>parsley.js</code>. Have a look at the <a href="#remote">Parsley Remote</a> plugin and <a href="#extras">Parsley Extras</a> for more validators.
           </p>
 
-          <h3 id="validators-craft">Craft yours!</h3>
+          <h1 id="validators-custom">Custom Validators</h3>
+          <h3 id="validators-craft">Craft yours</h3>
           <p>Of course, Parsley built-in validators are commonly used validators, and you'll need some more that fit your specific forms and validations. That's why Parsley lets you easily create your own validators.</p>
           <p>
-          <p>Here again, like localizations, configuring your custom validators and error messages comes in two flavors:
-          <ul>
-            <li>By registering them in globals <strong>before</strong> loading <code>parsley.js</code>:
-<pre><code>&lt;input type="text" data-parsley-multipleof="3" />
-[...]
-&lt;script type="text/javascript">
-window.ParsleyConfig = {
-  validators: {
-    multipleof: {
-      fn: function (value, requirement) {
-        return 0 === value % requirement;
-      },
-      priority: 32
-    }
-  },
-  i18n: {
-    en: {
-      multipleof: 'This value should be a multiple of %s'
-    },
-    fr: {
-      multipleof: 'Cette valeur doit être un multiple de %s'
-    }
-  }
-};
-&lt;/script>
-</code></pre>
-            </li>
-            <li>By registering them in <code>ParsleyValidator</code> <strong>after</strong> <code>parsley.js</code> is loaded:
+          <p>The preferred way to register them (after <code>parsley.js</code> is loaded) looks like:
 
 <pre><code>&lt;input type="text" data-parsley-multipleof="3" />
 [...]
 &lt;script type="text/javascript">
-window.ParsleyValidator
-  .addValidator('multipleof', function (value, requirement) {
-    return 0 === value % requirement;
-  }, 32)
+window.Parsley.Validators
+  .addValidator('multipleof', {
+    requirementType: 'integer',
+    validateNumber: function(value, requirement) {
+      return 0 === value % requirement;
+    }
+  )
   .addMessage('en', 'multipleof', 'This value should be a multiple of %s')
   .addMessage('fr', 'multipleof', 'Cette valeur doit être un multiple de %s');
 &lt;/script>
-</code></pre></li>
-          </ul>
+</code></pre>
           </p>
+
+          <h3 id="validators-custom-requirement">Requirement function</h3>
+          <p>Custom validators can validate single values
         </div>
 
         <!-- ****************** UI/ UX ****************** -->
