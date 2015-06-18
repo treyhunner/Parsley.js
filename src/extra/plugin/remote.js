@@ -6,12 +6,9 @@
 // Because returns promises instead of booleans.
 (function($){
 
-window.ParsleyExtend = window.ParsleyExtend || {};
-window.ParsleyExtend = $.extend(true, window.ParsleyExtend, {
-  asyncSupport: true,
-
+$.extend(window.Parsley, {
   asyncValidators: {
-    'default': {
+    default: {
       fn: function (xhr) {
         return 'resolved' === xhr.state();
       },
@@ -27,7 +24,7 @@ window.ParsleyExtend = $.extend(true, window.ParsleyExtend, {
   },
 
   addAsyncValidator: function (name, fn, url, options) {
-    this.asyncValidators[name.toLowerCase()] = {
+    window.Parsley.asyncValidators[name.toLowerCase()] = {
       fn: fn,
       url: url || false,
       options: options || {}
@@ -49,7 +46,15 @@ window.ParsleyExtend = $.extend(true, window.ParsleyExtend, {
   }
 });
 
-var remoteValidate = function (value, url, options) {
+window.ParsleyValidator.addValidator('remote', {
+  requirementType: {
+    '': 'string',
+    'validator': 'string',
+    'reverse': 'boolean',
+    'options': 'object'
+  },
+
+  validateString: function (value, url, options) {
     var
       data = {},
       ajaxOptions,
@@ -58,7 +63,7 @@ var remoteValidate = function (value, url, options) {
 
     validator = validator.toLowerCase();
 
-    if ('undefined' === typeof this.asyncValidators[validator])
+    if ('undefined' === typeof window.Parsley.asyncValidators[validator])
       throw new Error('Calling an undefined async validator: `' + validator + '`');
 
     // Fill data with current value
@@ -69,7 +74,7 @@ var remoteValidate = function (value, url, options) {
 
     // All `$.ajax(options)` could be overridden or extended directly from DOM in `data-parsley-remote-options`
     ajaxOptions = $.extend(true, {}, {
-      url: this.asyncValidators[validator].url || url,
+      url: window.Parsley.asyncValidators[validator].url || url,
       data: data,
       type: 'GET'
     }, remoteOptions);
@@ -89,19 +94,7 @@ var remoteValidate = function (value, url, options) {
         $.Deferred().reject().promise(); // Map false to rejected promise
     };
 
-    xhr.then(handleXhr, handleXhr);
-  };
-
-window.ParsleyValidator.addValidator('remote', {
-  requirementType: {
-    '': 'string',
-    'validator': 'string',
-    'reverse': 'boolean',
-    'options': 'object'
-  },
-
-  validateString: function () {
-    return true;
+    return xhr.then(handleXhr, handleXhr);
   },
 
   priority: -1
