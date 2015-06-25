@@ -90,7 +90,7 @@
     },
     warn: function() {
       if (window.console && window.console.warn)
-        window.console.warn.apply(window.console, arguments);
+        Function.prototype.apply.call(console.warn, console, arguments);
     },
     warnOnce: function(msg) {
       if (!pastWarnings[msg]) {
@@ -882,7 +882,7 @@ var Validator = ( function ( ) {
   // https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Array/indexOf
   if (!Array.prototype.indexOf)
     Array.prototype.indexOf = function (searchElement /*, fromIndex */ ) {
-        
+
         if (this === null) {
             throw new TypeError();
         }

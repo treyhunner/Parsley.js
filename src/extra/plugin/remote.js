@@ -54,7 +54,7 @@ window.ParsleyValidator.addValidator('remote', {
     'options': 'object'
   },
 
-  validateString: function (value, url, options) {
+  validateString: function (value, url, options, instance) {
     var
       data = {},
       ajaxOptions,
@@ -67,7 +67,7 @@ window.ParsleyValidator.addValidator('remote', {
       throw new Error('Calling an undefined async validator: `' + validator + '`');
 
     // Fill data with current value
-    data[this.$element.attr('name') || this.$element.attr('id')] = this.getValue();
+    data[instance.$element.attr('name') || instance.$element.attr('id')] = value;
 
     // Merge options passed in from the function with the ones in the attribute
     var remoteOptions = $.extend(true, options.options || {} , window.Parsley.asyncValidators[validator].options);
