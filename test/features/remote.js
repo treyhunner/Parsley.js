@@ -24,13 +24,14 @@ define('features/remote', [
         var parsleyInstance = $('#element').parsley();
 
         sinon.stub($, 'ajax').returns($.Deferred().reject({ status: 400, state: function () { return 'rejected' } }, 'error', 'error'));
+
         parsleyInstance.whenValid()
           .fail(function () {
             $.ajax.restore();
             sinon.stub($, 'ajax').returns($.Deferred().resolve({}, 'success', { status: 200, state: function () { return 'resolved' } }));
 
             $('#element').val('bar');
-            parsleyInstance.asyncIsValid()
+            parsleyInstance.whenValid()
               .done(function () {
                 $.ajax.restore();
                 done();
@@ -42,13 +43,13 @@ define('features/remote', [
         var parsleyInstance = $('#element').parsley();
 
         sinon.stub($, 'ajax').returns($.Deferred().resolve({}, 'success', { status: 200, state: function () { return 'resolved' } }));
-        parsleyInstance.asyncIsValid()
+        parsleyInstance.whenValid()
           .fail(function () {
             $.ajax.restore();
             sinon.stub($, 'ajax').returns($.Deferred().reject({ status: 400, state: function () { return 'rejected' } }, 'error', 'error'));
 
             $('#element').val('bux');
-            parsleyInstance.asyncIsValid()
+            parsleyInstance.whenValid()
               .done(function () {
                 $.ajax.restore();
                 done();
@@ -60,7 +61,7 @@ define('features/remote', [
         var parsleyInstance = $('#element').parsley();
 
         sinon.stub($, 'ajax').returns($.Deferred().resolve({}, 'success', { status: 200, state: function () { return 'resolved' } }));
-        parsleyInstance.asyncIsValid()
+        parsleyInstance.whenValid()
           .done(function () {
             expect($.ajax.calledWithMatch({ type: "POST" })).to.be(true);
             expect($.ajax.calledWithMatch({ url: "http://foo.bar" })).to.be(true);
@@ -74,16 +75,18 @@ define('features/remote', [
         var parsleyInstance = $('#element').parsley();
 
         sinon.stub($, 'ajax').returns($.Deferred().resolve({}, 'success', { status: 200, state: function () { return 'resolved' } }));
-        parsleyInstance.asyncIsValid()
+        parsleyInstance.whenValid()
           .done(function () {
+                debugger
             expect($.ajax.calledOnce).to.be(true);
             expect($.ajax.calledWithMatch({ data: { "element": "foo" } })).to.be(true);
             $.ajax.restore();
             sinon.stub($, 'ajax').returns($.Deferred().reject({ status: 400, state: function () { return 'rejected' } }, 'error', 'error'));
 
             $('#element').val('bar');
-            parsleyInstance.asyncIsValid()
+            parsleyInstance.whenValid()
               .fail(function () {
+                debugger
                 expect($.ajax.calledOnce).to.be(true);
                 expect($.ajax.calledWithMatch({ data: { "element": "bar" } })).to.be(true);
 
@@ -91,8 +94,9 @@ define('features/remote', [
                 sinon.stub($, 'ajax').returns($.Deferred().resolve({}, 'success', { status: 200, state: function () { return 'resolved' } }));
                 $('#element').val('foo');
 
-                parsleyInstance.asyncIsValid()
+                parsleyInstance.whenValid()
                   .done(function () {
+                    debugger
                     expect($.ajax.callCount).to.be(0);
                     expect($.ajax.calledOnce).to.be(false);
                     $.ajax.restore();
@@ -107,19 +111,19 @@ define('features/remote', [
         var parsleyInstance = $('#element').parsley();
 
         sinon.stub($, 'ajax').returns($.Deferred().resolve({}, 'success', { status: 200, state: function () { return 'resolved' } }));
-        parsleyInstance.asyncIsValid()
+        parsleyInstance.whenValid()
           .fail(function () {
             $.ajax.restore();
             sinon.stub($, 'ajax').returns($.Deferred().reject({ status: 400, state: function () { return 'rejected' } }, 'error', 'error'));
 
             $('#element').val('foobaz');
-            parsleyInstance.asyncIsValid()
+            parsleyInstance.whenValid()
               .fail(function () {
                 $.ajax.restore();
                 sinon.stub($, 'ajax').returns($.Deferred().reject({ status: 404, state: function () { return 'rejected' } }, 'error', 'not found'));
 
                 $('#element').val('fooquux');
-                parsleyInstance.asyncIsValid()
+                parsleyInstance.whenValid()
                   .done(function () {
                     $.ajax.restore();
                     done();
@@ -136,7 +140,7 @@ define('features/remote', [
         }, 'http://foobar.baz');
 
         sinon.stub($, 'ajax').returns($.Deferred().resolve({}, 'success', { status: 200, state: function () { return 'resolved' } }));
-        parsleyInstance.asyncIsValid()
+        parsleyInstance.whenValid()
           .fail(function () {
             expect($.ajax.calledWithMatch({ url: "http://foobar.baz" })).to.be(true);
             $.ajax.restore();
@@ -152,7 +156,7 @@ define('features/remote', [
         }, 'http://foobar.baz');
 
         sinon.stub($, 'ajax').returns($.Deferred().resolve({}, 'success', { status: 200, state: function () { return 'resolved' } }));
-        parsleyInstance.asyncIsValid()
+        parsleyInstance.whenValid()
           .fail(function () {
             expect($.ajax.calledWithMatch({ url: "http://foobar.baz" })).to.be(true);
             $.ajax.restore();

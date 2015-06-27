@@ -61,8 +61,6 @@ window.ParsleyValidator.addValidator('remote', {
       csr,
       validator = options.validator || (true === options.reverse ? 'reverse' : 'default');
 
-    validator = validator.toLowerCase();
-
     if ('undefined' === typeof window.Parsley.asyncValidators[validator])
       throw new Error('Calling an undefined async validator: `' + validator + '`');
 
@@ -90,8 +88,10 @@ window.ParsleyValidator.addValidator('remote', {
     var xhr = window.Parsley._remoteCache[csr] = window.Parsley._remoteCache[csr] || $.ajax(ajaxOptions);
 
     var handleXhr = function() {
-      return window.Parsley.asyncValidators[validator](xhr, url, options) ||
-        $.Deferred().reject().promise(); // Map false to rejected promise
+      var result = window.Parsley.asyncValidators[validator].fn(xhr, url, options);
+      if (false === result) // Map false to rejected promise
+        result = $.Deferred().reject();
+      return $.when(result);
     };
 
     return xhr.then(handleXhr, handleXhr);
@@ -104,4 +104,5 @@ window.Parsley.on('form:submit', function () {
   window.Parsley._remoteCache = {};
 });
 
+window.Parsley
 })(jQuery);
