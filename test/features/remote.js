@@ -16,6 +16,9 @@ define('features/remote', [
         window.ParsleyConfig = window._remoteParsleyConfig;
         window.ParsleyValidator.init(window.ParsleyConfig.validators, window.ParsleyConfig.i18n);
       });
+      beforeEach(function() {
+        delete window.Parsley._remoteCache;
+      });
       it('should have window.ParsleyExtend defined', function () {
         expect(window.ParsleyExtend).not.to.be(undefined);
       });
@@ -74,8 +77,15 @@ define('features/remote', [
         $('body').append('<input type="text" data-parsley-remote="http://foo.bar" id="element" required name="element" value="foo" />');
         var parsleyInstance = $('#element').parsley();
 
-        sinon.stub($, 'ajax').returns($.Deferred().resolve({}, 'success', { status: 200, state: function () { return 'resolved' } }));
+        var deferred = $.Deferred();
+        var xhr = $.extend(deferred.promise(), {status: 200, stubbed: true});
+        sinon.stub($, 'ajax').returns(xhr);
+        deferred.resolve({}, 'success', xhr);
+        debugger
         parsleyInstance.whenValid()
+          .fail(function() {
+            debugger
+          })
           .done(function () {
                 debugger
             expect($.ajax.calledOnce).to.be(true);
@@ -135,7 +145,7 @@ define('features/remote', [
         $('body').append('<input type="text" data-parsley-remote id="element" data-parsley-remote-validator="mycustom" required name="element" value="foobar" />');
         var parsleyInstance = $('#element').parsley();
 
-        parsleyInstance.addAsyncValidator('mycustom', function (xhr) {
+        window.Parsley.addAsyncValidator('mycustom', function (xhr) {
           return xhr.status === 404;
         }, 'http://foobar.baz');
 
@@ -151,7 +161,7 @@ define('features/remote', [
         $('body').append('<input type="text" data-parsley-remote id="element" data-parsley-remote-validator="mycustom" required name="element" value="foobar" />');
         var parsleyInstance = $('#element').parsley();
 
-        parsleyInstance.addAsyncValidator('mycustom', function (xhr) {
+        window.Parsley.addAsyncValidator('mycustom', function (xhr) {
           expect(this.__class__).to.be('ParsleyField');
         }, 'http://foobar.baz');
 
